@@ -11,7 +11,7 @@ export interface ScrapedListing {
   url: string;
 }
 
-function buildUrl(filter: Filter, page: number): string {
+function buildTargetUrl(filter: Filter, page: number): string {
   const base = "https://www.polovniautomobili.com/auto-oglasi/pretraga";
   const params = new URLSearchParams();
   params.set("brand", filter.brand);
@@ -20,21 +20,20 @@ function buildUrl(filter: Filter, page: number): string {
   if (filter.year_to) params.set("year_to", String(filter.year_to));
   if (filter.price_from) params.set("price_from", String(filter.price_from));
   if (filter.price_to) params.set("price_to", String(filter.price_to));
-  params.set("page", String(page));
-  params.set("sort", "dateDesc");
+  params.set("showOldNew", "all");
+  if (page > 1) params.set("page", String(page));
   return `${base}?${params.toString()}`;
+}
+
+function scraperApiUrl(targetUrl: string): string {
+  const key = process.env.SCRAPER_API_KEY;
+  return `http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(targetUrl)}`;
 }
 
 function parsePrice(text: string): number | null {
   const cleaned = text.replace(/[^\d]/g, "");
   const num = parseInt(cleaned, 10);
-  return isNaN(num) ? null : num;
-}
-
-function parseMileage(text: string): number | null {
-  const cleaned = text.replace(/[^\d]/g, "");
-  const num = parseInt(cleaned, 10);
-  return isNaN(num) ? null : num;
+  return isNaN(num) || num === 0 ? null : num;
 }
 
 function parseYear(text: string): number | null {
@@ -42,69 +41,59 @@ function parseYear(text: string): number | null {
   return match ? parseInt(match[0], 10) : null;
 }
 
-function extractIdFromUrl(url: string): string {
-  const match = url.match(/\/(\d+)(?:\/|$)/);
-  return match ? match[1] : url;
+function parseMileage(text: string): number | null {
+  const match = text.match(/(\d[\d\s.]*)\s*km/i);
+  if (!match) return null;
+  const num = parseInt(match[1].replace(/[\s.]/g, ""), 10);
+  return isNaN(num) ? null : num;
+}
+
+function extractId(href: string): string {
+  const match = href.match(/\/(\d+)(?:\/|$|\?)/);
+  return match ? match[1] : href;
 }
 
 async function scrapePage(
   filter: Filter,
   page: number
 ): Promise<{ listings: ScrapedListing[]; hasMore: boolean }> {
-  const url = buildUrl(filter, page);
+  const targetUrl = buildTargetUrl(filter, page);
+  const fetchUrl = scraperApiUrl(targetUrl);
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "sr,en-US;q=0.7,en;q=0.3",
-    },
-  });
-
+  const res = await fetch(fetchUrl);
   if (!res.ok) return { listings: [], hasMore: false };
 
   const html = await res.text();
   const $ = cheerio.load(html);
   const listings: ScrapedListing[] = [];
 
-  $("article.classified-item, .classified-item").each((_, el) => {
+  // each ad has class like "classified ad-XXXXXXXX ..."
+  $('[class*="classified ad-"]').each((_, el) => {
     const $el = $(el);
 
-    const linkEl = $el.find("a.classified-title, h3 a, .title a").first();
+    const linkEl = $el.find("a.ga-title").first();
     const href = linkEl.attr("href") || "";
-    const fullUrl = href.startsWith("http")
-      ? href
-      : `https://www.polovniautomobili.com${href}`;
-
     const title = linkEl.text().trim();
     if (!title || !href) return;
 
-    const id = extractIdFromUrl(href);
+    const fullUrl = href.startsWith("http")
+      ? href
+      : `https://www.polovniautomobili.com${href}`;
+    const id = extractId(href);
 
-    const priceText = $el.find(".price-box, .price").first().text();
+    const priceText = $el.find(".price").first().text();
     const price = parsePrice(priceText);
 
-    const detailsText = $el.find(".details, .classified-details").text();
-    const mileage = parseMileage(
-      $el.find(".mileage, [class*=mileage]").text() || detailsText
-    );
-    const year = parseYear(
-      $el.find(".year, [class*=year]").text() || title || detailsText
-    );
-    const city =
-      $el
-        .find(".city, .location, [class*=location]")
-        .first()
-        .text()
-        .trim() || null;
+    const setInfo = $el.find(".setInfo").text();
+    const mileage = parseMileage(setInfo);
+    const year = parseYear($el.find(".first-row-info").text() || setInfo || title);
+
+    const city = $el.find(".city").first().text().trim() || null;
 
     listings.push({ id, title, price_eur: price, mileage_km: mileage, city, year, url: fullUrl });
   });
 
-  const hasMore =
-    listings.length > 0 &&
-    $("a[rel=next], .pagination .next, li.next:not(.disabled)").length > 0;
+  const hasMore = $(".js-pagination-next").length > 0 && listings.length > 0;
 
   return { listings, hasMore };
 }
@@ -127,9 +116,7 @@ export async function scrapeFilter(
     }
 
     if (!hasMore) break;
-
-    // polite delay between pages
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   return all;
