@@ -92,9 +92,17 @@ async function scrapePage(
     const priceText = $el.find(".price").first().text();
     const price = parsePrice(priceText);
 
-    const setInfo = $el.find(".setInfo").text();
-    const mileage = parseMileage(setInfo);
-    const year = parseYear($el.find(".first-row-info").text() || setInfo || title);
+    // kilometraža je u setInfo .top čiji title sadrži "km", godina u drugom setInfo .top
+    let mileage: number | null = null;
+    let year: number | null = null;
+    $el.find(".setInfo .top").each((_, infoEl) => {
+      const titleAttr = $(infoEl).attr("title") || "";
+      if (titleAttr.includes("km") && mileage === null) {
+        mileage = parseMileage(titleAttr);
+      } else if (/^\d{4}\./.test(titleAttr) && year === null) {
+        year = parseYear(titleAttr);
+      }
+    });
 
     const city = $el.find(".city").first().text().trim() || null;
 
