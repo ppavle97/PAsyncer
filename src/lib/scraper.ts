@@ -21,6 +21,8 @@ function buildTargetUrl(filter: Filter, page: number): string {
   if (filter.price_from) params.set("price_from", String(filter.price_from));
   if (filter.price_to) params.set("price_to", String(filter.price_to));
   params.set("showOldNew", "all");
+  params.set("without_price", "1");
+  params.set("submit_1", "");
   if (page > 1) params.set("page", String(page));
   return `${base}?${params.toString()}`;
 }
