@@ -12,19 +12,18 @@ export interface ScrapedListing {
 }
 
 function buildTargetUrl(filter: Filter, page: number): string {
-  const base = "https://www.polovniautomobili.com/auto-oglasi/pretraga";
-  const params = new URLSearchParams();
-  params.set("brand", filter.brand);
-  if (filter.model) params.set("model[]", filter.model);
-  if (filter.year_from) params.set("year_from", String(filter.year_from));
-  if (filter.year_to) params.set("year_to", String(filter.year_to));
-  if (filter.price_from) params.set("price_from", String(filter.price_from));
-  if (filter.price_to) params.set("price_to", String(filter.price_to));
-  params.set("showOldNew", "all");
-  params.set("without_price", "1");
-  params.set("submit_1", "");
-  if (page > 1) params.set("page", String(page));
-  return `${base}?${params.toString()}`;
+  const parts: string[] = [];
+  parts.push(`brand=${encodeURIComponent(filter.brand)}`);
+  if (filter.model) parts.push(`model[]=${encodeURIComponent(filter.model)}`);
+  if (filter.year_from) parts.push(`year_from=${filter.year_from}`);
+  if (filter.year_to) parts.push(`year_to=${filter.year_to}`);
+  if (filter.price_from) parts.push(`price_from=${filter.price_from}`);
+  if (filter.price_to) parts.push(`price_to=${filter.price_to}`);
+  parts.push("showOldNew=all");
+  parts.push("without_price=1");
+  parts.push("submit_1=");
+  if (page > 1) parts.push(`page=${page}`);
+  return `https://www.polovniautomobili.com/auto-oglasi/pretraga?${parts.join("&")}`;
 }
 
 function scraperApiUrl(targetUrl: string): string {
