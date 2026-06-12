@@ -102,7 +102,7 @@ const TABS = [
 
 export default function ListingsPanel({ listings }: { listings: Listing[] }) {
   const [tab, setTab] = useState<"all" | "price" | "sold">("all");
-  const [sort, setSort] = useState<"date" | "price">("date");
+  const [sort, setSort] = useState<"date" | "price" | "mileage">("date");
 
   const active = listings.filter((l) => l.is_active);
   const priceChanged = listings.filter((l) => l.is_active && l.price_change);
@@ -112,6 +112,7 @@ export default function ListingsPanel({ listings }: { listings: Listing[] }) {
 
   const sorted = [...active].sort((a, b) => {
     if (sort === "price") return (a.price_eur ?? 999999) - (b.price_eur ?? 999999);
+    if (sort === "mileage") return (a.mileage_km ?? 999999) - (b.mileage_km ?? 999999);
     return new Date(b.first_seen_at).getTime() - new Date(a.first_seen_at).getTime();
   });
 
@@ -142,9 +143,9 @@ export default function ListingsPanel({ listings }: { listings: Listing[] }) {
         <>
           <div className="flex items-center justify-end gap-2">
             <span className="text-xs text-gray-600">Sortiraj:</span>
-            {(["date", "price"] as const).map((s) => (
+            {(["date", "price", "mileage"] as const).map((s) => (
               <button key={s} onClick={() => setSort(s)} className={`text-xs px-2 py-1 rounded transition-colors ${sort === s ? "bg-gray-700 text-white" : "text-gray-600 hover:text-gray-300"}`}>
-                {s === "date" ? "Datum" : "Cena"}
+                {s === "date" ? "Datum" : s === "price" ? "Cena" : "Km"}
               </button>
             ))}
           </div>

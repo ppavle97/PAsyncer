@@ -8,6 +8,8 @@ create table if not exists filters (
   year_to int,
   price_from int,
   price_to int,
+  mileage_from int,
+  mileage_to int,
   created_at timestamptz not null default now()
 );
 
