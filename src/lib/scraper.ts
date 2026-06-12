@@ -13,8 +13,8 @@ export interface ScrapedListing {
 
 function buildTargetUrl(filter: Filter, page: number): string {
   const parts: string[] = [];
-  parts.push(`brand=${encodeURIComponent(filter.brand)}`);
-  if (filter.model) parts.push(`model[]=${encodeURIComponent(filter.model)}`);
+  parts.push(`brand=${encodeURIComponent(filter.brand.toLowerCase())}`);
+  if (filter.model) parts.push(`model[]=${encodeURIComponent(filter.model.toLowerCase())}`);
   if (filter.year_from) parts.push(`year_from=${filter.year_from}`);
   if (filter.year_to) parts.push(`year_to=${filter.year_to}`);
   if (filter.price_from) parts.push(`price_from=${filter.price_from}`);
@@ -75,7 +75,7 @@ async function scrapePage(
 
   const listings: ScrapedListing[] = [];
 
-  $('[class*="classified ad-"]').each((_, el) => {
+  $('[class*="classified ad-"]:not([class*="topFeaturedClassified"])').each((_, el) => {
     const $el = $(el);
 
     const linkEl = $el.find("a.ga-title").first();
