@@ -104,17 +104,6 @@ export default function Home() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {/* Mobile: hamburger to open filter list */}
-          {filters.length > 0 && (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 rounded-lg bg-gray-800 text-gray-300"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          )}
           <div>
             <h1 className="text-xl font-bold tracking-tight leading-none">PAsyncer</h1>
             <p className="text-gray-500 text-xs mt-0.5 hidden sm:block">Pratilac auto oglasa · Polovni automobili</p>
@@ -134,6 +123,22 @@ export default function Home() {
           <p className="text-sm">Dodaj filter da počneš da pratiš oglase.</p>
         </div>
       ) : (
+        <>
+          {/* Mobile: filter pill strip — izvan flex reda */}
+          <div className="md:hidden mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => selectFilter(f)}
+                  className={`shrink-0 text-sm px-4 py-2 rounded-full font-medium transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400"}`}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
         <div className="flex gap-5">
           {/* Desktop sidebar */}
           <div className="hidden md:block w-52 shrink-0 space-y-1">
@@ -157,21 +162,6 @@ export default function Home() {
                 </button>
               </div>
             ))}
-          </div>
-
-          {/* Mobile: filter pill strip */}
-          <div className="md:hidden w-full mb-3 -mt-1">
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {filters.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => selectFilter(f)}
-                  className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400"}`}
-                >
-                  {f.name}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Main content */}
@@ -207,6 +197,7 @@ export default function Home() {
             )}
           </div>
         </div>
+        </>
       )}
 
       {/* Mobile sidebar overlay */}
