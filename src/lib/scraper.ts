@@ -61,20 +61,27 @@ async function scrapePage(
   const targetUrl = buildTargetUrl(filter, page);
   const fetchUrl = scraperApiUrl(targetUrl);
 
+  console.log(`[scraper] fetching page ${page}: ${targetUrl}`);
   const res = await fetch(fetchUrl);
+  console.log(`[scraper] response status: ${res.status}`);
   if (!res.ok) return { listings: [], hasMore: false };
 
   const html = await res.text();
+  console.log(`[scraper] html length: ${html.length}`);
   const $ = cheerio.load(html);
+
+  const adElements = $('[class*="classified ad-"]').length;
+  console.log(`[scraper] found ${adElements} ad elements`);
+
   const listings: ScrapedListing[] = [];
 
-  // each ad has class like "classified ad-XXXXXXXX ..."
   $('[class*="classified ad-"]').each((_, el) => {
     const $el = $(el);
 
     const linkEl = $el.find("a.ga-title").first();
     const href = linkEl.attr("href") || "";
     const title = linkEl.text().trim();
+    console.log(`[scraper] ad: title="${title}" href="${href}"`);
     if (!title || !href) return;
 
     const fullUrl = href.startsWith("http")
