@@ -25,19 +25,16 @@ export default function Home() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [listings, setListings] = useState<any[]>([]);
   const [loadingListings, setLoadingListings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const loadFilters = useCallback(async () => {
     const res = await fetch("/api/filters");
     const data = await res.json();
     setFilters(data);
-    if (data.length > 0 && !selected) {
-      setSelected(data[0]);
-    }
+    if (data.length > 0 && !selected) setSelected(data[0]);
   }, [selected]);
 
-  useEffect(() => {
-    loadFilters();
-  }, []);
+  useEffect(() => { loadFilters(); }, []);
 
   const loadListings = useCallback(async (filterId: string) => {
     setLoadingListings(true);
@@ -66,9 +63,7 @@ export default function Home() {
       if (!res.ok) {
         setSyncMsg(`Greška: ${data.error}`);
       } else {
-        setSyncMsg(
-          `Sync završen — ${data.total_scraped} oglasa, ${data.new_listings.length} novih, ${data.price_changes.length} promena cene, ${data.removed_listings.length} sklonjenih`
-        );
+        setSyncMsg(`Sync završen — ${data.total_scraped} oglasa, ${data.new_listings.length} novih, ${data.price_changes.length} promena cene, ${data.removed_listings.length} sklonjenih`);
         loadListings(selected.id);
       }
     } catch {
@@ -99,18 +94,37 @@ export default function Home() {
     return parts.join(" ");
   }
 
+  function selectFilter(f: Filter) {
+    setSelected(f);
+    setSidebarOpen(false);
+  }
+
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">PAsyncer</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Pratilac auto oglasa · Polovni automobili</p>
+    <main className="max-w-5xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          {/* Mobile: hamburger to open filter list */}
+          {filters.length > 0 && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 rounded-lg bg-gray-800 text-gray-300"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          <div>
+            <h1 className="text-xl font-bold tracking-tight leading-none">PAsyncer</h1>
+            <p className="text-gray-500 text-xs mt-0.5 hidden sm:block">Pratilac auto oglasa · Polovni automobili</p>
+          </div>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
         >
-          + Dodaj filter
+          + Filter
         </button>
       </div>
 
@@ -120,12 +134,13 @@ export default function Home() {
           <p className="text-sm">Dodaj filter da počneš da pratiš oglase.</p>
         </div>
       ) : (
-        <div className="flex gap-6">
-          <div className="w-56 shrink-0 space-y-1">
+        <div className="flex gap-5">
+          {/* Desktop sidebar */}
+          <div className="hidden md:block w-52 shrink-0 space-y-1">
             {filters.map((f) => (
               <div
                 key={f.id}
-                onClick={() => setSelected(f)}
+                onClick={() => selectFilter(f)}
                 className={`group flex items-start justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "hover:bg-gray-800 text-gray-300"}`}
               >
                 <div className="min-w-0">
@@ -136,7 +151,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(f); }}
-                  className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ${selected?.id === f.id ? "text-blue-200 hover:text-white" : "text-gray-600 hover:text-red-400"}`}
+                  className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5 ${selected?.id === f.id ? "text-blue-200 hover:text-white" : "text-gray-600 hover:text-red-400"}`}
                 >
                   ✕
                 </button>
@@ -144,20 +159,36 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* Mobile: filter pill strip */}
+          <div className="md:hidden w-full mb-3 -mt-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => selectFilter(f)}
+                  className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400"}`}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0 w-full">
             {selected && (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-lg">{selected.name}</h2>
+                  <h2 className="font-semibold text-base truncate">{selected.name}</h2>
                   <button
                     onClick={handleSync}
                     disabled={syncing}
-                    className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                    className="shrink-0 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                   >
                     {syncing ? (
                       <>
                         <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
-                        Sinkronizujem...
+                        <span className="hidden sm:inline">Sinkronizujem...</span>
                       </>
                     ) : "↻ Sync"}
                   </button>
@@ -174,6 +205,47 @@ export default function Home() {
                   : <ListingsPanel listings={listings} />}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-gray-900 border-r border-gray-800 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-semibold text-sm">Filteri</span>
+              <button onClick={() => setSidebarOpen(false)} className="text-gray-500 hover:text-white">✕</button>
+            </div>
+            <div className="space-y-1">
+              {filters.map((f) => (
+                <div
+                  key={f.id}
+                  onClick={() => selectFilter(f)}
+                  className={`group flex items-start justify-between gap-2 px-3 py-3 rounded-lg cursor-pointer transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "hover:bg-gray-800 text-gray-300"}`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{f.name}</div>
+                    <div className={`text-xs mt-0.5 ${selected?.id === f.id ? "text-blue-200" : "text-gray-500"}`}>
+                      {filterLabel(f)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(f); setSidebarOpen(false); }}
+                    className="text-xs text-gray-600 hover:text-red-400 mt-0.5 shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => { setShowAdd(true); setSidebarOpen(false); }}
+              className="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
+            >
+              + Dodaj filter
+            </button>
           </div>
         </div>
       )}
