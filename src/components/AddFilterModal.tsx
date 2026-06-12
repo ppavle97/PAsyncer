@@ -61,69 +61,73 @@ export default function AddFilterModal({ onClose, onAdded }: Props) {
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Marka *</label>
-              <input
-                required
-                value={form.brand}
-                onChange={(e) => set("brand", e.target.value)}
-                placeholder="audi"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Model</label>
-              <input
-                value={form.model}
-                onChange={(e) => set("model", e.target.value)}
-                placeholder="a3"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
-            </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Marka *</label>
+            <input
+              required
+              value={form.brand}
+              onChange={(e) => set("brand", e.target.value)}
+              placeholder="audi"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Godina od</label>
-              <input
-                type="number"
-                value={form.year_from}
-                onChange={(e) => set("year_from", e.target.value)}
-                placeholder="2018"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
+          <div className="border-t border-gray-800 pt-3">
+            <p className="text-xs text-gray-600 mb-2">Opciono</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">Model</label>
+                <input
+                  value={form.model}
+                  onChange={(e) => set("model", e.target.value)}
+                  placeholder="a3"
+                  className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-400 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+              <div />
             </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Godina do</label>
-              <input
-                type="number"
-                value={form.year_to}
-                onChange={(e) => set("year_to", e.target.value)}
-                placeholder="2024"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">Godina od</label>
+                <input
+                  type="number"
+                  value={form.year_from}
+                  onChange={(e) => set("year_from", e.target.value)}
+                  placeholder="2018"
+                  className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-400 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">Godina do</label>
+                <input
+                  type="number"
+                  value={form.year_to}
+                  onChange={(e) => set("year_to", e.target.value)}
+                  placeholder="2025"
+                  className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-400 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Cena od (€)</label>
-              <input
-                type="number"
-                value={form.price_from}
-                onChange={(e) => set("price_from", e.target.value)}
-                placeholder="5000"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Cena do (€)</label>
-              <input
-                type="number"
-                value={form.price_to}
-                onChange={(e) => set("price_to", e.target.value)}
-                placeholder="15000"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">Cena od (€)</label>
+                <input
+                  type="number"
+                  value={form.price_from}
+                  onChange={(e) => set("price_from", e.target.value)}
+                  placeholder="5000"
+                  className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-400 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 mb-1 block">Cena do (€)</label>
+                <input
+                  type="number"
+                  value={form.price_to}
+                  onChange={(e) => set("price_to", e.target.value)}
+                  placeholder="15000"
+                  className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-400 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
             </div>
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
