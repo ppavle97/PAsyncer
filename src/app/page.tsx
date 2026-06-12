@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import AddFilterModal from "@/components/AddFilterModal";
-import DiffPanel from "@/components/DiffPanel";
+import ListingsPanel from "@/components/ListingsPanel";
 
 interface Filter {
   id: string;
@@ -23,8 +23,8 @@ export default function Home() {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [diffData, setDiffData] = useState<any>(null);
-  const [loadingDiff, setLoadingDiff] = useState(false);
+  const [listings, setListings] = useState<any[]>([]);
+  const [loadingListings, setLoadingListings] = useState(false);
 
   const loadFilters = useCallback(async () => {
     const res = await fetch("/api/filters");
@@ -39,20 +39,18 @@ export default function Home() {
     loadFilters();
   }, []);
 
-  const loadDiff = useCallback(async (filterId: string) => {
-    setLoadingDiff(true);
-    setDiffData(null);
-    const res = await fetch(`/api/diff?filter_id=${filterId}`);
+  const loadListings = useCallback(async (filterId: string) => {
+    setLoadingListings(true);
+    setListings([]);
+    const res = await fetch(`/api/listings?filter_id=${filterId}`);
     const data = await res.json();
-    setDiffData(data);
-    setLoadingDiff(false);
+    setListings(data.listings || []);
+    setLoadingListings(false);
   }, []);
 
   useEffect(() => {
-    if (selected) {
-      loadDiff(selected.id);
-    }
-  }, [selected, loadDiff]);
+    if (selected) loadListings(selected.id);
+  }, [selected, loadListings]);
 
   async function handleSync() {
     if (!selected) return;
@@ -71,7 +69,7 @@ export default function Home() {
         setSyncMsg(
           `Sync završen — ${data.total_scraped} oglasa, ${data.new_listings.length} novih, ${data.price_changes.length} promena cene, ${data.removed_listings.length} sklonjenih`
         );
-        loadDiff(selected.id);
+        loadListings(selected.id);
       }
     } catch {
       setSyncMsg("Greška pri syncu");
@@ -90,18 +88,14 @@ export default function Home() {
     setFilters(newFilters);
     if (selected?.id === f.id) {
       setSelected(newFilters[0] || null);
-      setDiffData(null);
+      setListings([]);
     }
   }
 
   function filterLabel(f: Filter) {
     const parts = [f.brand.toUpperCase(), f.model].filter(Boolean);
-    if (f.year_from || f.year_to) {
-      parts.push(`${f.year_from || ""}–${f.year_to || ""}`);
-    }
-    if (f.price_from || f.price_to) {
-      parts.push(`${f.price_from ? f.price_from + "€" : ""}–${f.price_to ? f.price_to + "€" : ""}`);
-    }
+    if (f.year_from || f.year_to) parts.push(`${f.year_from || ""}–${f.year_to || ""}`);
+    if (f.price_from || f.price_to) parts.push(`${f.price_from ? f.price_from + "€" : ""}–${f.price_to ? f.price_to + "€" : ""}`);
     return parts.join(" ");
   }
 
@@ -127,36 +121,22 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex gap-6">
-          {/* sidebar */}
           <div className="w-56 shrink-0 space-y-1">
             {filters.map((f) => (
               <div
                 key={f.id}
                 onClick={() => setSelected(f)}
-                className={`group flex items-start justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                  selected?.id === f.id
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-gray-800 text-gray-300"
-                }`}
+                className={`group flex items-start justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${selected?.id === f.id ? "bg-blue-600 text-white" : "hover:bg-gray-800 text-gray-300"}`}
               >
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{f.name}</div>
-                  <div
-                    className={`text-xs truncate mt-0.5 ${
-                      selected?.id === f.id ? "text-blue-200" : "text-gray-500"
-                    }`}
-                  >
+                  <div className={`text-xs truncate mt-0.5 ${selected?.id === f.id ? "text-blue-200" : "text-gray-500"}`}>
                     {filterLabel(f)}
                   </div>
                 </div>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(f);
-                  }}
-                  className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ${
-                    selected?.id === f.id ? "text-blue-200 hover:text-white" : "text-gray-600 hover:text-red-400"
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(f); }}
+                  className={`text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ${selected?.id === f.id ? "text-blue-200 hover:text-white" : "text-gray-600 hover:text-red-400"}`}
                 >
                   ✕
                 </button>
@@ -164,7 +144,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* main */}
           <div className="flex-1 min-w-0">
             {selected && (
               <>
@@ -180,9 +159,7 @@ export default function Home() {
                         <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
                         Sinkronizujem...
                       </>
-                    ) : (
-                      "↻ Sync"
-                    )}
+                    ) : "↻ Sync"}
                   </button>
                 </div>
 
@@ -192,23 +169,16 @@ export default function Home() {
                   </div>
                 )}
 
-                {loadingDiff ? (
-                  <div className="text-gray-600 text-sm py-8 text-center">Učitavam...</div>
-                ) : diffData ? (
-                  <DiffPanel data={diffData} />
-                ) : null}
+                {loadingListings
+                  ? <div className="text-gray-600 text-sm py-8 text-center">Učitavam...</div>
+                  : <ListingsPanel listings={listings} />}
               </>
             )}
           </div>
         </div>
       )}
 
-      {showAdd && (
-        <AddFilterModal
-          onClose={() => setShowAdd(false)}
-          onAdded={loadFilters}
-        />
-      )}
+      {showAdd && <AddFilterModal onClose={() => setShowAdd(false)} onAdded={loadFilters} />}
     </main>
   );
 }
